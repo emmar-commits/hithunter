@@ -177,7 +177,7 @@
   var SP_SCOPES = 'user-read-playback-state user-modify-playback-state';
   var CAN_SPOTIFY = location.protocol === 'https:' && !/claude/i.test(location.hostname);
   var SP = loadSP();
-  var spMsg = '', spBusy = false;
+  var spMsg = '', spBusy = false, spWake = '', spQuiet = false;
 
   function loadSP(){ try{ return JSON.parse(localStorage.getItem(SP_KEY)) || {}; }catch(e){ return {}; } }
   function saveSP(){ try{ localStorage.setItem(SP_KEY, JSON.stringify(SP)); }catch(e){} }
@@ -252,16 +252,40 @@
       if(!uri){ spMsg = 'Couldn\'t find this one on Spotify. Pick a different song.'; return; }
       var dev = await spPickDevice();
       if(!dev){ spMsg = 'No Spotify device found. Open the Spotify app on this phone for a second, come back and tap Play again.'; return; }
+      SP.dev = { id:dev.id, name:dev.name, vol:!!dev.supports_volume }; saveSP();
+      if(spQuiet && dev.supports_volume){ await spApi('PUT', '/me/player/volume?volume_percent=' + (SP.vol || 80) + '&device_id=' + encodeURIComponent(dev.id)).catch(function(){}); }
+      spQuiet = false;
       await spApi('PUT', '/me/player/play?device_id=' + encodeURIComponent(dev.id), { uris:[uri] });
-      spMsg = 'Playing on ' + dev.name;
+      spMsg = 'Starting on ' + dev.name + '…'; render(true);
+      // iPhones freeze Spotify in the background: Spotify accepts the command but no sound plays.
+      // Check that the song is really playing; if not, offer to wake Spotify with one tap.
+      await new Promise(function(r){ setTimeout(r, 2500); });
+      var st = await spApi('GET', '/me/player').catch(function(){ return null; });
+      var ok = st && st.is_playing && st.item && st.item.uri === uri && st.progress_ms > 0;
+      if(ok){ spMsg = 'Playing on ' + dev.name; spWake = ''; }
+      else {
+        spWake = 'https://open.spotify.com/track/' + uri.split(':').pop();
+        spMsg = 'Spotify is asleep on this phone. Tap Wake Spotify, press play there, then swipe back. After that, songs switch from here without leaving the game.';
+      }
     }catch(e){
       spMsg = e.reason === 'PREMIUM_REQUIRED' ? 'Spotify Premium is needed to play from the game.' :
-              e.status === 404 ? 'Spotify isn\'t active. Open the Spotify app for a second, then tap Play again.' :
+              e.status === 404 ? 'Spotify isn\'t active. Open the Spotify app and press play on anything, then come back and tap Play again.' :
               'Spotify: ' + e.message;
     }finally{ spBusy = false; render(true); }
   }
-  async function spPause(){
-    try{ await spApi('PUT', '/me/player/pause'); spMsg = 'Paused'; }catch(e){ spMsg = 'Spotify: ' + e.message; }
+  // Pausing lets iOS put Spotify to sleep, so "Quiet" turns the volume down instead where the phone allows it.
+  async function spQuietToggle(){
+    try{
+      var st = await spApi('GET', '/me/player');
+      var canVol = st && st.device && st.device.supports_volume;
+      if(canVol){
+        if(!spQuiet){ SP.vol = st.device.volume_percent || 80; saveSP();
+          await spApi('PUT', '/me/player/volume?volume_percent=5'); spQuiet = true; spMsg = 'Turned down. Spotify stays awake for the next song.'; }
+        else { await spApi('PUT', '/me/player/volume?volume_percent=' + (SP.vol || 80)); spQuiet = false; spMsg = 'Volume back up.'; }
+      } else {
+        await spApi('PUT', '/me/player/pause'); spMsg = 'Paused. If the next song stays silent, use Wake Spotify.';
+      }
+    }catch(e){ spMsg = 'Spotify: ' + e.message; }
     render(true);
   }
   function spDisconnect(){ SP = { cid: SP.cid }; saveSP(); spMsg = 'Spotify disconnected.'; }
@@ -269,7 +293,7 @@
   function spSetupCard(){
     if(!CAN_SPOTIFY) return '';
     if(spConnected()) return '<div class="card row"><div class="grow stack" style="gap:2px"><span style="font-weight:600;font-size:15px">Spotify connected</span>'+
-      '<span class="muted" style="font-size:13px">Songs play on the host\'s Spotify without leaving the game</span></div>'+
+      '<span class="muted" style="font-size:13px">Tip: before the game, open Spotify and start any song so it\'s awake. Then songs switch from here.</span></div>'+
       '<button class="btn ghost" style="min-height:44px;font-size:14px" data-a="spout">Disconnect</button></div>';
     var cid = spClientId();
     return '<div class="card stack"><span style="font-weight:600;font-size:15px">Play songs from the game</span>'+
@@ -366,8 +390,9 @@
       (curSong() && spConnected()
         ? '<p class="muted" style="font-size:14px;line-height:1.5">A local hit, picked at random. It plays on the host\'s Spotify.</p>'+
           '<div class="row" style="gap:8px"><button class="btn primary grow" style="min-height:56px;font-size:17px" data-a="spplay" '+(spBusy?'disabled':'')+'>'+I.play+'Play song '+S.song+'</button>'+
-          '<button class="btn" style="min-height:56px" aria-label="Pause" data-a="sppause"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg></button></div>'+
+          '<button class="btn" style="min-height:56px" aria-label="'+(spQuiet?'Volume back up':'Quiet: turn Spotify down')+'" data-a="sppause">'+(spQuiet?'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>':'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"/></svg>')+'</button></div>'+
           (spMsg ? '<p class="muted" style="font-size:13px;text-align:center" role="status">'+esc(spMsg)+'</p>' : '')+
+          (spWake ? '<a class="btn spotify" href="'+spWake+'" target="_blank" rel="noopener">'+I.play+'Wake Spotify</a>' : '')+
           '<div class="row" style="justify-content:space-between"><button class="btn link" style="min-height:36px;font-size:13px;color:var(--muted);padding:0" data-a="skipsong">Pick a different song</button>'+
           '<a href="'+songUrl(curSong())+'" target="_blank" rel="noopener" style="font-size:13px;color:var(--muted)">Open in Spotify</a></div>'
       : curSong()
@@ -458,10 +483,10 @@
     start:function(){ if(guessers().length<1) return; S.players.forEach(function(p){p.score=0;}); S.round=1; S.used=[]; S.history=[]; newRound(); },
     choose:function(d){ S.country=d.c; },
     random:function(){ var left=COUNTRIES.filter(function(c){return S.used.indexOf(c[0])<0;}); if(left.length){ S.country=left[Math.floor(Math.random()*left.length)][0]; S.search=''; } },
-    lock:function(){ if(!S.country) return; spMsg=''; S.song=1; S.played=[]; S.qpos=0; S.queue = hasLocal(S.country) ? shuffled(LOCAL[S.country].length) : null; S.screen='play'; },
+    lock:function(){ if(!S.country) return; spMsg=''; spWake=''; S.song=1; S.played=[]; S.qpos=0; S.queue = hasLocal(S.country) ? shuffled(LOCAL[S.country].length) : null; S.screen='play'; },
     award:function(d){ var i=+d.i, pts=ptsFor(S.song); S.players[i].score+=pts; markPlayed(); S.history.push({round:S.round,country:S.country,winner:i,points:pts,song:S.song,songs:S.played.slice()}); S.used.push(S.country); S.screen='reveal'; },
-    nextsong:function(){ if(S.song<S.songs){ markPlayed(); S.qpos++; S.song++; spMsg=''; } },
-    skipsong:function(){ if(S.queue) S.qpos++; spMsg=''; },
+    nextsong:function(){ if(S.song<S.songs){ markPlayed(); S.qpos++; S.song++; spMsg=''; spWake=''; } },
+    skipsong:function(){ if(S.queue) S.qpos++; spMsg=''; spWake=''; },
     nobody:function(){ markPlayed(); S.history.push({round:S.round,country:S.country,winner:null,points:0,song:S.song,songs:S.played.slice()}); S.used.push(S.country); S.screen='reveal'; },
     undo:function(){ var h=S.history.pop(); if(!h) return; if(h.winner!=null) S.players[h.winner].score-=h.points; S.used.pop(); S.country=h.country; S.song=h.song; if(S.played && S.played.length) S.played.pop(); S.screen='play'; },
     nextround:function(){ if(S.round>=S.rounds){ S.screen='final'; return; } S.round++; newRound(); },
@@ -472,7 +497,7 @@
     splogin:function(){ spLogin(); return 'async'; },
     spout:function(){ spDisconnect(); },
     spplay:function(){ var c=curSong(); if(c && !spBusy) spPlay(c); return 'async'; },
-    sppause:function(){ spPause(); return 'async'; },
+    sppause:function(){ spQuietToggle(); return 'async'; },
     closemenu:function(){ modal=null; }
   };
 
