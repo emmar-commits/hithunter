@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111318">
+<title>HitHunter</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --bg:#111318; --card:#1C1F27; --card2:#2A2E3A; --line:#343846;
+    --text:#F4F1EA; --muted:#A7ABB8; --accent:#FFB547; --accent-ink:#1A1300; --accent-soft:#2A2416;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+  body{min-height:100vh;min-height:100dvh}
+  .wrap{max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;gap:20px;
+    padding:calc(24px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom))}
+  h1,h2,.display{font-family:'Space Grotesk',sans-serif;margin:0}
+  p{margin:0}
+  .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:32px;letter-spacing:-.5px;color:var(--accent)}
+  .muted{color:var(--muted)}
+  .label{font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+  .stack{display:flex;flex-direction:column;gap:10px}
+  .row{display:flex;align-items:center;gap:12px}
+  .card{background:var(--card);border-radius:16px;padding:12px 14px}
+  .grow{flex:1;min-width:0}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;font-weight:600;color:var(--muted)}
+  button,.btn{font:inherit;color:var(--text);border:0;cursor:pointer;text-decoration:none}
+  .btn{min-height:48px;padding:0 16px;border-radius:14px;background:var(--card2);font-weight:600;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn.primary{min-height:60px;border-radius:18px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:18px}
+  .btn.primary:disabled{opacity:.4}
+  .btn.ghost{background:transparent;border:1px solid var(--line)}
+  .btn.link{background:transparent;color:var(--accent);min-height:44px}
+  .btn.spotify{background:#1C1F27;border:1px solid var(--line)}
+  .icon{width:44px;height:44px;border-radius:12px;background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center}
+  .avatar{width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+  input[type=text],input[type=search]{flex:1;min-width:0;height:48px;padding:0 14px;border-radius:14px;border:1px solid var(--line);background:transparent;color:var(--text);font:inherit;font-size:16px}
+  input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .seg button{height:48px;border-radius:12px;border:1px solid var(--line);background:transparent;font-weight:600;font-size:16px}
+  .seg button[aria-pressed=true]{border:2px solid var(--accent);background:var(--accent-soft)}
+  .switch{width:52px;height:32px;border-radius:16px;background:var(--line);position:relative;flex:none}
+  .switch::after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:12px;background:var(--text);transition:left .15s}
+  .switch[aria-checked=true]{background:var(--accent)}
+  .switch[aria-checked=true]::after{left:24px;background:var(--accent-ink)}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:6px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+  .country{min-height:52px;display:flex;align-items:center;gap:12px;padding:0 14px;border-radius:14px;background:var(--card);border:2px solid transparent;width:100%;text-align:left}
+  .country[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent)}
+  .code{width:38px;height:28px;border-radius:6px;background:var(--card2);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+  .list{display:flex;flex-direction:column;gap:8px;overflow:auto;max-height:44vh;padding-right:2px}
+  .progress{display:flex;gap:6px}
+  .progress span{flex:1;height:6px;border-radius:3px;background:var(--line)}
+  .progress span.on{background:var(--accent)}
+  .players{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .player{min-height:96px;border-radius:18px;border:2px solid;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px}
+  .player b{font-size:20px}
+  .player span{font-size:13px;color:var(--muted)}
+  .player.host{border:1px dashed var(--line);color:var(--muted);cursor:default}
+  .hero{display:flex;flex-direction:column;align-items:center;gap:10px;padding:28px 20px;border-radius:22px;background:var(--card);text-align:center}
+  .big{font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:700;line-height:1.05;color:var(--accent);word-break:break-word}
+  .stand{display:flex;align-items:center;gap:12px;min-height:56px;padding:0 16px;border-radius:14px;background:var(--card)}
+  .stand .n{width:20px;font-weight:700;color:var(--muted)}
+  .stand .pts{min-width:48px;text-align:right;font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700}
+  .bottom{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+  .podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:end}
+  .podium .col{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+  .podium .col>span{font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .podium .blk{width:100%;border-radius:14px 14px 4px 4px;border:2px solid;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{padding:8px 12px;border-radius:999px;background:var(--card);font-size:14px}
+  .peek{min-height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;user-select:none;-webkit-user-select:none;touch-action:none}
+  .sr{position:absolute;left:-9999px}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;padding:20px}
+  .sheet{width:100%;max-width:440px;background:var(--card);border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:14px}
+  .err{color:#FF8FA0;font-size:14px}
+</style>
+</head>
+<body>
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+  var COLORS = [
+    {c:'#4CC9F0',bg:'#0F2A33',ink:'#06212B'},
+    {c:'#B79CFF',bg:'#221A38',ink:'#1B1033'},
+    {c:'#7EE0A1',bg:'#12291A',ink:'#08240F'},
+    {c:'#FF8FA0',bg:'#33161C',ink:'#2B0A10'},
+    {c:'#FFB547',bg:'#2A2416',ink:'#1A1300'},
+    {c:'#9AD0FF',bg:'#152434',ink:'#071827'},
+    {c:'#F7E37A',bg:'#2B2812',ink:'#221E00'},
+    {c:'#FFA97A',bg:'#2E1C12',ink:'#2A1100'}
+  ];
+  // Countries that have (or have had) a Spotify "Top 50" chart playlist.
+  var COUNTRIES = [
+    ['AR','Argentina'],['AU','Australia'],['AT','Austria'],['BY','Belarus'],['BE','Belgium'],['BO','Bolivia'],
+    ['BR','Brazil'],['BG','Bulgaria'],['CA','Canada'],['CL','Chile'],['CO','Colombia'],['CR','Costa Rica'],
+    ['CZ','Czech Republic'],['DK','Denmark'],['DO','Dominican Republic'],['EC','Ecuador'],['EG','Egypt'],
+    ['SV','El Salvador'],['EE','Estonia'],['FI','Finland'],['FR','France'],['DE','Germany'],['GR','Greece'],
+    ['GT','Guatemala'],['HN','Honduras'],['HK','Hong Kong'],['HU','Hungary'],['IS','Iceland'],['IN','India'],
+    ['ID','Indonesia'],['IE','Ireland'],['IL','Israel'],['IT','Italy'],['JP','Japan'],['KZ','Kazakhstan'],
+    ['LV','Latvia'],['LT','Lithuania'],['LU','Luxembourg'],['MY','Malaysia'],['MX','Mexico'],['MA','Morocco'],
+    ['NL','Netherlands'],['NZ','New Zealand'],['NI','Nicaragua'],['NG','Nigeria'],['NO','Norway'],
+    ['PK','Pakistan'],['PA','Panama'],['PY','Paraguay'],['PE','Peru'],['PH','Philippines'],['PL','Poland'],
+    ['PT','Portugal'],['RO','Romania'],['SA','Saudi Arabia'],['SG','Singapore'],['SK','Slovakia'],
+    ['ZA','South Africa'],['KR','South Korea'],['ES','Spain'],['SE','Sweden'],['CH','Switzerland'],
+    ['TW','Taiwan'],['TH','Thailand'],['TR','Turkey'],['AE','United Arab Emirates'],['UA','Ukraine'],
+    ['GB','United Kingdom'],['US','United States'],['UY','Uruguay'],['VE','Venezuela'],['VN','Vietnam']
+  ];
+  // Spotify "Top 50 - <Country>" playlist IDs.
+  var PL = {
+    AR:'37i9dQZEVXbMMy2roB9myp',AU:'37i9dQZEVXbJPcfkRz0wJ0',AT:'37i9dQZEVXbKNHh6NIXu36',BY:'37i9dQZEVXbIYfjSLbWr4V',
+    BE:'37i9dQZEVXbJNSeeHswcKB',BO:'37i9dQZEVXbJqfMFK4d691',BR:'37i9dQZEVXbMXbN3EUUhlg',BG:'37i9dQZEVXbNfM2w2mq1B8',
+    CA:'37i9dQZEVXbKj23U1GF4IR',CL:'37i9dQZEVXbL0GavIqMTeb',CO:'37i9dQZEVXbOa2lmxNORXQ',CR:'37i9dQZEVXbMZAjGMynsQX',
+    CZ:'37i9dQZEVXbIP3c3fqVrJY',DK:'37i9dQZEVXbL3J0k32lWnN',DO:'37i9dQZEVXbKAbrMR8uuf7',EC:'37i9dQZEVXbJlM6nvL1nD1',
+    EG:'37i9dQZEVXbLn7RQmT5Xv2',SV:'37i9dQZEVXbLxoIml4MYkT',EE:'37i9dQZEVXbLesry2Qw2xS',FI:'37i9dQZEVXbMxcczTSoGwZ',
+    FR:'37i9dQZEVXbIPWwFssbupI',DE:'37i9dQZEVXbJiZcmkrIHGU',GR:'37i9dQZEVXbJqdarpmTJDL',GT:'37i9dQZEVXbLy5tBFyQvd4',
+    HN:'37i9dQZEVXbJp9wcIM9Eo5',HK:'37i9dQZEVXbLwpL8TjsxOG',HU:'37i9dQZEVXbNHwMxAkvmF8',IS:'37i9dQZEVXbKMzVsSGQ49S',
+    IN:'37i9dQZEVXbLZ52XmnySJg',ID:'37i9dQZEVXbObFQZ3JLcXt',IE:'37i9dQZEVXbKM896FDX8L1',IL:'37i9dQZEVXbJ6IpvItkve3',
+    IT:'37i9dQZEVXbIQnj7RRhdSX',JP:'37i9dQZEVXbKXQ4mDTEBXq',KZ:'37i9dQZEVXbM472oKPNKzS',LV:'37i9dQZEVXbJWuzDrTxbKS',
+    LT:'37i9dQZEVXbMx56Rdq5lwc',LU:'37i9dQZEVXbKGcyg6TFGx6',MY:'37i9dQZEVXbJlfUljuZExa',MX:'37i9dQZEVXbO3qyFxbkOE1',
+    MA:'37i9dQZEVXbJU9eQpX8gPT',NL:'37i9dQZEVXbKCF6dqVpDkS',NZ:'37i9dQZEVXbM8SIrkERIYl',NI:'37i9dQZEVXbISk8kxnzfCq',
+    NG:'37i9dQZEVXbKY7jLzlJ11V',NO:'37i9dQZEVXbJvfa0Yxg7E7',PK:'37i9dQZEVXbJkgIdfsJyTw',PA:'37i9dQZEVXbKypXHVwk1f0',
+    PY:'37i9dQZEVXbNOUPGj7tW6T',PE:'37i9dQZEVXbJfdy5b0KP7W',PH:'37i9dQZEVXbNBz9cRCSFkY',PL:'37i9dQZEVXbN6itCcaL3Tt',
+    PT:'37i9dQZEVXbKyJS56d1pgi',RO:'37i9dQZEVXbNZbJ6TZelCq',SA:'37i9dQZEVXbLrQBcXqUtaC',SG:'37i9dQZEVXbK4gjvS1FjPY',
+    SK:'37i9dQZEVXbKIVTPX9a2Sb',ZA:'37i9dQZEVXbMH2jvi6jvjk',KR:'37i9dQZEVXbNxXF4SkHj9F',ES:'37i9dQZEVXbNFJfN1Vw8d9',
+    SE:'37i9dQZEVXbLoATJ81JYXz',CH:'37i9dQZEVXbJiyhoAPEfMK',TW:'37i9dQZEVXbMnZEatlMSiu',TH:'37i9dQZEVXbMnz8KIWsvf9',
+    TR:'37i9dQZEVXbIVYVBNw9D5K',AE:'37i9dQZEVXbM4UZuIrvHvA',UA:'37i9dQZEVXbKkidEfWYRuD',GB:'37i9dQZEVXbLnolsZ8PSNw',
+    US:'37i9dQZEVXbLRQDuF5jeBp',UY:'37i9dQZEVXbMJJi3wgRbAy',VE:'37i9dQZEVXbNLrliB10ZnX',VN:'37i9dQZEVXbLdGSmz6xilI'
+  };
+  // Local-only songs per country: [artist, title, [other chart countries]]. Built by charts/filter.py.
+  var LOCAL = /*LOCAL*/{"AR":[["Anuel AA","Vuelve",[]],["Anuel AA","Las mas bonitas son p#tas",["ES"]],["Jay Wheeler","De Lejitos - Remix",["ES"]],["Lezcano Alan","PERRA",[]],["DJ Tao","JUANO DSKT | DJ TAO Sessions #33",[]],["BOM","EN ITALIA",[]],["Emilia","BODYPAINTING",[]],["La Juntada De Los Artistas","Quien Dice",[]],["ROA","VAMO A VEL",["ES"]],["Omar Courtz","POR SI MAÑANA NO ESTOY",[]],["Ponte Perro","TAPA LA CARA",[]],["Lauta","Puñaladas",[]],["Roze Oficial","Tu jardín con enanitos",[]],["Ozuna","ZIZI",[]],["Q' Lokura","Dime Tú - En Vivo Movistar Arena",[]],["Omar Courtz","KOKO",[]],["BOM","MIGAJAS",[]],["BOM","BAILAR O MORIR",[]],["BOM","SEÑORA",[]],["Duki","Sudaca",[]],["Callejero Fino","NO LES DA",[]],["Quevedo","AL GOLPITO",["ES"]],["Max Carra","UWAIE - versión cumbia",[]],["Ya Ice Dilan","Dichavate",["ES"]],["Brytiago","Estoy Pa' Ti",[]],["Los Herrera","¿Quién te dijo? - En Vivo",[]],["Babasonicos","Como Eran Las Cosas",[]],["BOM","ADONDE",[]],["Simon Aguirre","Corazón Sin Cara - En Vivo",[]],["Alex Rose","Toda - Remix",[]],["Los Huayra","La Noche Sin Tí",[]],["Airbag","Por Mil Noches",[]],["La Juntada De Los Artistas","Que Lloro",[]],["Bad Bunny","VeLDÁ",[]],["BOM","VIVO DEL POP",[]],["Turf","Pasos Al Costado",[]],["Anuel AA","Amanece",[]],["Héctor \"El Father\"","El Telefono",[]],["Omar Courtz","FOREVER TU GANTEL",[]],["Tan Bionica","Obsesionario en La Mayor",[]],["Duki","Otra Vez",[]],["Los del Fuego","Jurabas Tu",[]],["Luciano Pereyra","Si No Es Muy Tarde - Versión Cumbia",[]],["Duki","El Malo",[]],["Jambao","Se Parece Más A Ti",[]],["Meta Guacha","Para La Gilada - Remix",[]]],"BR":[["Felipe e Rodrigo","Pós - Ao Vivo",[]],["João Gustavo e Murilo","Postinho de Gasolina",[]],["Hugo & Guilherme","Flash - Ao Vivo",[]],["Hugo & Guilherme","Flash (Minha Mente)",[]],["Netto Brito","Mega Hair - Ao Vivo",[]],["Zé Neto & Cristiano","Cadeira Cativa - Ao Vivo",[]],["MC Jvila","Geme Baixo",[]],["Danilo e Davi","Eu Não Sou Terapia - Ao Vivo",[]],["Felipe e Rodrigo","Ignora (Ao Vivo)",[]],["MC Leozinho ZS","Ta Pedindo Toma",[]],["Felipe e Rodrigo","Eu Me Rendo - Ao Vivo",[]],["NATTAN","Aproveita Que Eu Tô Brigado - Ao Vivo",[]],["Panda","Eu Te Seguro - Ao Vivo",[]],["Jeninho","Peão Todo Tatuado",[]],["MC Jvila","Puxa o Lança",[]],["CountryBeat","Um Peão Desse",[]],["Zé Neto & Cristiano","Oi, Tudo Bem? - Ao Vivo",[]],["Oldilla","Cuida do Pet",[]],["Guilherme & Benuto","Eu Duvido - Ao Vivo",[]],["Pedro e Benicio","Lembrança Boa",[]],["Mc Jacaré","Pau Pra Toda Obra",[]],["MC Jvila","EXAGERADO",[]],["Jorge & Mateus","Primavera",[]],["Matheus & Kauan","Meu Silêncio - Ao Vivo",[]],["Danilo e Davi","Mulher Nunca Foi Pra Menino - Ao Vivo",[]],["DJ Biel do Furduncinho","Mentira ou Verdade",[]],["Felipe e Rodrigo","Dois Gumes (Ao Vivo)",[]],["Henrique & Juliano","Última Saudade (Ao Vivo)",[]],["Danilo e Davi","Não Mexe nas Minhas Gavetas - Ao Vivo",[]],["Júnior e Cézar","Cheiro De Culpado - Ao Vivo",[]],["Murilo Huff","Só Com Ela - Ao Vivo",[]],["Mc Lele JP","Famoso Ímã | O poderoso chatão",[]],["MC GP","Nada Pra Fazer (Casa das P*)",[]],["Mc Iguinho Ct","GRWM",[]],["Mari Fernandez","Telefone Sem Fio - Ao Vivo",[]],["MC VN Cria","Ritmo Era Uma Vez (Fantasy)",[]],["Ícaro e Gilmar","Imagina Você",[]],["CountryBeat","Pegada Bruta",[]],["dj andreoli","Menos Foco Mais Ansiedade (Ce Ta Nervosa)",[]],["Diego & Victor Hugo","Tubarões - Ao Vivo",[]],["João Gustavo e Murilo","Nem Balancei",[]],["DJ Oreia","Diário de um Cafajeste",[]],["Mc Jacaré","Carnívoro",[]],["Murilo Huff","Saudade Estranha - Du Nada - Ao Vivo",[]],["MC Ryan SP","SET BOCA 09",[]],["Zé Neto & Cristiano","Plano C - Ao Vivo",[]],["Henry Freitas","Me Fala Qual Necessidade - Ao Vivo",[]],["Zé Vaqueiro","Traidor",[]],["DJ Japa NK","Posso Até Não Te Dar Flores",[]],["Kaique e Felipe","Imagina Se Me Odiasse - Ao Vivo",[]]],"DE":[["Ski Aggu","Verschwommen",["AT"]],["Symba","Mama - Remix",["AT"]],["AYLIVA","Für immer",[]],["CEDDO","arm um mich",["AT"]],["PAPKE","GAUNA SPORT",[]],["Wir sind Helden","Von hier an blind",[]],["Ski Aggu","Verschwommen x Von hier an blind",[]],["Sido","ISSA",[]],["HARDWICK","7 MANN",["AT"]],["DJ Goja","Mi Chico",[]],["Jazeek","AKON",["AT"]],["Sido","PROPAGANDA",[]],["Thekidszn","IMPULSIVE",[]]],"ES":[["La Pantera","SHARINGAN",[]],["La Pantera","DOGGY",[]],["Lucho RK","RETRICA",[]],["Lucho RK","CONTIGO",[]],["Quevedo","LA GRACIOSA",["IT"]],["Clarent","Jukiar",[]],["Lucho RK","AIRE",[]],["Lucho RK","SORDO DE UN PIE - interludio",[]],["Lucho RK","SUMISA",[]],["Køddy G","Peli De Terror",[]],["Jay Wheeler","De Lejitos - Remix",["AR"]],["Lucho RK","RIGHT NOW",[]],["C. Tangana","Milko Freestyle",[]],["La Pantera","COLORÉAME",[]],["Quevedo","AL GOLPITO",["AR"]],["La Pantera","TOO",[]],["La Pantera","RUN AWAY",[]],["La Pantera","TONY STARK",[]],["W Sound","Happy Monday - W Sound 10",[]],["Lucho RK","TOCATE SOLA",[]],["ROA","VAMO A VEL",["AR"]],["La Pantera","VUELVE PLEASE",[]],["Ya Ice Dilan","Dichavate",["AR"]],["Judeline","La Falda",[]],["La Pantera","SÉ DE TI",[]],["La Pantera","NO se XQ",[]],["La Pantera","SHIPEO",[]],["Clarent","Ojos Brujos",[]],["Lucho RK","RESACA EMOCIONAL",[]],["Anuel AA","Las mas bonitas son p#tas",["AR"]],["Quevedo","ALGO VA A PASAR",[]],["Ñengo Flow","Baby Lover",[]],["Kybba","Se Le Ve",[]],["ANMI","NO ME GUILLO v2",[]],["La Pantera","ESPECIAL BB",[]],["La Pantera","Quiero más",[]],["Myke Towers","Te Imagino",[]],["Conep","After",[]],["La Pantera","PREGUNTAS",[]],["Ana Mena","pa ti toa <3",[]],["Clarent","Dime Baby",[]],["Romeo Santos","Dardos",[]],["La Pantera","PINKY PROMISE 2",[]],["Rvfv","Corrupta",[]],["Young Miko","BnB",[]],["Maluma","AGUA",[]]],"FR":[["Vacra","Fille à Papa (w/ La Rvfleuze)",[]],["Tiakola","Mélo Décalé",[]],["Le Crime","Bodycount (w/ TK)",[]],["Mauvais djo","4",[]],["Mauvais djo","12",[]],["RnBoi","J'assume",[]],["Aya Nakamura","Sexy Nana (w/ La Rvfleuze)",[]],["Ronisia","Cuenta (w/ Meryl, Shay)",[]],["Mauvais djo","Wagyu",[]],["Cherry Pie","BIR HAKEIM",[]],["Mauvais djo","Maladie",[]],["Tiakola","Jet Lag (w/ Jorja Smith)",[]],["Mauvais djo","Pilé",[]],["Theodora","Habiba",[]],["Timal","Sicario",[]],["Aya Nakamura","La pétasse",[]],["Bello&Dallas","Séminaire",[]],["Jok'air","Nouméa (w/ Linema)",[]],["Leto","Pineapple",[]],["Tiakola","La Nocturne (w/ Theodora)",[]],["Nono La Grinta","LOVE YOU",[]],["PLK","Pocahontas",[]],["TeddyBear","Chaussures Roses",[]],["Ninho","La vie qu'on mène",[]],["disiz","melodrama (w/ Theodora)",[]],["GIMS","VIVE LA MONNAIE (w/ Mauvais djo)",[]],["Bouss","Cote à la hausse",[]],["Nono La Grinta","Paris",[]],["Lagui","Olivia Valere",[]],["Werenoi","Jalouse (w/ SDM, Vacra)",[]],["Bamby","Pas Jalouse (w/ Kerchak)",[]],["L2B","CYBERTESLA",[]],["Adèle Castillon","Été avec toi",[]],["ESTL","Te rencontrer encore",[]],["La Rvfleuze","Argent Sale - A COLORS SHOW",[]],["Damso","Ε. Signaler",[]],["Bello&Dallas","Belvedere",[]],["Niska","Allo Doudou",[]],["Gambi","RENÉ CAOVILLA",[]],["Djaksparo","Pangor (Swalalala)",[]],["Franglish","Uber (w/ KeBlack, Mauvais djo)",[]],["Ninho","Un Poco",[]],["kulturr","méli-mélo",[]],["Jul","Parfum quartier",[]],["Zed","Wetin Day",[]],["Le Crime","Amiri (w/ Gambi)",[]],["Werenoi","Chemin d'or",[]]],"ID":[["eńau","Sesi Potret",[]],["Raim Laode","Dunia Yang Nanti",[]],["Raim Laode","Iqro'",[]],["Tulus","Teh Hijau",[]],["Al-Ghazali","Amnesia",[]],["Gloria Jessica","Terbelah Jadi Dua",[]],["Kahitna","Titik Nadir",[]],["Noah","Separuh Aku",[]],["Tulus","Jatuh Suka",[]],["Raim Laode","Bersenja Gurau",[]],["Nadhif Basalamah","bergema sampai selamanya",[]],["Pamungkas","Monolog",[]],["Perunggu","Ini Abadi",[]],["Nadhif Basalamah","kota ini tak sama tanpamu",[]],["Piche Kota","Bahagia Lagi",[]],["LANY","Stuck",[]],["Idgitaf","Sedia Aku Sebelum Hujan",[]],["Ifan Seventeen","Jangan Paksa Rindu - Beda",[]],["Mahalini","Sisa Rasa",[]],["Sal Priadi","Ada titik-titik di ujung doa",[]],["Hindia","everything u are",[]],["Raim Laode","Lesung Pipi",[]],["Overnight","Kita Lewati Berdua",[]],["Denny Caknan","Negoro Angin",[]],["Perunggu","33x",[]],["Kahitna","Soulmate",[]],["For Revenge","Serana",[]],[".Feast","Nina",[]],["Dewa 19","Kangen",[]],["Tulus","Monokrom",[]],["Raim Laode","Menari-nari",[]],["Muslih Fvnky","Negoro Angin",[]],["Nidji","Rahasia Hati",[]],["Virgoun","Selamat (Selamat Tinggal)",[]],["Adrian Khalif","2001x",[]],["Nadhif Basalamah","penjaga hati",[]],["Dewa 19","Aku Milikmu",[]],["Astrid","Terpukau",[]],[".Feast","Tarot",[]],["For Revenge","Penyangkalan",[]],["Alex Crichton","What If I Call",[]],["Marcell","Takkan Terganti",[]],["Fourtwnty","Mangu",[]],["Raim Laode","Komang",[]]],"IN":[["Hamza Malik","Alfaaz",[]],["Banjaare","Barsaat",[]],["Anuv Jain","Arz Kiya Hai | Coke Studio Bharat",[]],["Sai Abhyankkar","Veezha Veera",[]],["Sai Abhyankkar","Radhimaa",[]],["Banjaare","Bairan",[]],["Navjot Ahuja","Khat",[]],["ARJN","KALYANI - Remix",[]],["Siri Xander","Pesamale",[]],["Shashwat Sachdev","Gehra Hua",[]],["Saurav Srisan","Rathinamo - Female Version",[]],["Karan Aujla","Ashke",[]],["Satinder Sartaaj","Guzarish",[]],["Atif Aslam","Tere Liye",[]],["Gajendra Verma","Mann Mera",[]],["Jawad Ahmad","Samjhawan",[]],["Anirudh Ravichander","Ala Bolelo",[]],["Anuv Jain","Jo Tum Mere Ho",[]],["Vishal Mishra","Tum Ho Toh (From \"Saiyaara\")",[]],["Aditya Rikhari","Sahiba",[]],["Arijit Singh","Zaalima",[]],["Anirudh Ravichander","One Name",[]],["Zain Zohaib","Ranjheya Ve",[]],["Alka Yagnik","Agar Tum Saath Ho",[]],["Mithoon","Darkhaast",[]],["Sachin-Jigar","Apna Bana Le",[]],["Kushagra","Finding Her",[]],["Anand Bhaskar","Vaaroon Forever",[]],["Shreya Ghoshal","Tu Thodi Der Aur Thehar Ja",[]],["Rito Riba","Dilruba Dilnasheen",[]],["Noor","Aarzu",[]],["Anirudh Ravichander","Putaapu Gang",[]],["Sai Abhyankkar","Pavazha Malli",[]],["Sai Abhyankkar","Magale",[]],["Pritam","Ye Tune Kya Kiya",[]],["Faheem Abdullah","Ishq",[]],["The Rish","Barbaad (From \"Saiyaara\")",[]],["Arijit Singh","Mast Magan",[]],["Paresh Pahuja","Dooron Dooron",[]],["Shashwat Sachdev","Shararat",[]],["Karan Aujla","For A Reason",[]],["Mitta Ror","Sheesha",[]],["Tanishk Bagchi","Saiyaara",[]],["Hamza Malik","Alfaaz - Vocals",[]],["Sai Abhyankkar","Alaakaa Loova",[]],["Deepthi Suresh","Bindaas",[]],["Palak Muchhal","Chahun Main Ya Naa",[]],["KR$NA","Boom Shaka",[]],["Harshit Saxena","Hale Dil",[]],["Mustafa Zahid","Maine Khud Ko",[]]],"IT":[["Kid Yugi","Sentire La Musica",[]],["Geolier","CANZONE D'AMORE",[]],["Sfera Ebbasta","Lontano",[]],["Alfa","Eri solo da incontrare",[]],["Pinguini Tattici Nucleari","Nella Borsa Di Anna",[]],["Tony Boy","Sparisci",[]],["Geolier","NON SEI PIÙ TU",[]],["Geolier","2 GIORNI DI FILA",[]],["BLANCO","SOTTOGONNA",[]],["Geolier","PER NOI",[]],["Capo Plaza","Ogni Male",[]],["Madame","QUANTO FORTE TI PENSAVO",[]],["Frezza","7/7",[]],["Cesare Cremonini","Ora che non ho più te",[]],["Bresh","Da Dio",[]],["Artie 5ive","DAVVERODAVVERO",[]],["Shiva","Bad Bad Bad",[]],["Aya Nakamura","Pookie",[]],["Artie 5ive","SWAG MUSIC",[]],["Sfera Ebbasta","COME SE NON FOSSI NEI GUAI",[]],["Samurai Jay","OSSESSIONE",[]],["Kid Yugi","Amelie",[]],["Kid Yugi","DISOBBEDIRE!",[]],["Yung Snapp","DALE",[]],["Geolier","EMANUELE E ANDREA",[]],["Ultimo","ROMANTICA",[]],["Shiva","Bugie",[]],["Geolier","WINNER",[]],["Sfera Ebbasta","AYAYAY",[]],["Coez","La musica non c'è",[]],["Emma","L'Amore Non Mi Basta",[]],["Adriano Celentano","L'Emozione Non Ha Voce",[]],["Sfera Ebbasta","Giovani Re",[]],["Quevedo","LA GRACIOSA",["ES"]],["Pinguini Tattici Nucleari","Sorry Scusa Lo Siento",[]],["Marracash","NEON - Le Ali",[]],["Achille Lauro","AMOR",[]],["Fred De Palma","LA TESTA GIRA",[]],["Shiva","Mayday",[]],["Kid Yugi","Tristano e Isotta",[]],["Kid Yugi","Stratos",[]],["Kid Yugi","Puglia Crime",[]],["Kid Yugi","Eroina",[]],["Angelina Mango","Canto d'amore (con Marco Mengoni)",[]],["Luchè","Labirinto",[]],["Olly","Questa domenica",[]],["Sfera Ebbasta","NEON",[]],["Artie 5ive","SOGNO AMERICANO",[]],["Geolier","STELLE",[]]],"JP":[["Vaundy","しわあわせ",[]],["Ayumu Imazu","結び",[]],["EBiDAN (恵比寿学園男子部)","Yes! 東京",[]],["back number","ブルーアンバー",[]],["Macaroni Empitsu","運命さがし",[]],["Mrs. GREEN APPLE","Brand New",[]],["M!LK","ザッツ！超常",[]],["YAO","ありふれた世界の果てに",[]],["Mrs. GREEN APPLE","ライラック",[]],["ILLIT","It's Me",["KR"]],["Aimyon","マリーゴールド",[]],["Kvi Baba","BPM",[]],["Mrs. GREEN APPLE","Soranji",[]],["BE:FIRST","夢中",[]],["back number","HAPPY BIRTHDAY",[]],["A2O","NEON",["KR"]],["Sukima Switch","奏(かなで)",[]],["HANA","Slidin",[]],["Mrs. GREEN APPLE","lulu.",[]],["Kenshi Yonezu","IRIS OUT",[]],["Superfly","愛をこめて花束を",[]],["SPITZ","チェリー",[]],["HANA","Blue Jeans",[]],["BE:FIRST","NOW U KNOW",[]],["Number_i","BUGS LIFE",[]],["RADWIMPS","夕星-ゆうづつ-",[]]],"KR":[["A2O","NEON (w/ A2O LITE)",["JP"]],["RESCENE","With",[]],["RESCENE","Inside Out",[]],["머무르","The Adult I Dreamed Of",[]],["Jimin","Who",[]],["RESCENE","LOVE ATTACK",[]],["BESTie","Love Options",[]],["IVE","Looks Can Kill",[]],["SOYEON","I'm gonna TOESA",[]],["Redoor","Forever Has Always Been",[]],["CORTIS","REDRED",[]],["RESCENE","Dragon",[]],["RESCENE","Deja Vu",[]],["HANRORO","0+0",[]],["RESCENE","Pretty Girl",[]],["Nerd Connection","If I have you only (My love X Nerd Connection)",[]],["ATEEZ","BAD",[]],["HANRORO","Landing in Love",[]],["RESCENE","MEME",[]],["RESCENE","Finest Thing",[]],["Hearts2Hearts","RUDE!",[]],["aespa","LEMONADE",[]],["AKMU","How can I love the heartbreak, you're the one I love",[]],["Crush","seesaw (Feat. IU)",[]],["Nerd Connection","Good Night Good Dream",[]],["The Black Skirts","Ling Ling",[]],["PLAVE","Star Trace",[]],["HANRORO","Let Me Love My Youth",[]],["BIG Naughty","Nostalgia",[]],["데이먼스 이어 Damons year","yours",[]],["ILLIT","It's Me",["JP"]],["BIG Naughty","Vancouver",[]],["KiiiKiii","Pop Off Pop Off",[]],["Choi Yu Ree","When I stop thinking",[]],["WOODZ","Drowning",[]],["RESCENE","Pinball",[]],["PLAVE","Sweet Rain",[]],["RESCENE","Runaway",[]],["Kim Na Young","A Letter For You",[]],["Jung Kook","Seven (w/ Latto)",[]],["JANNABI","for lovers who hesitate",[]],["Post Malone","Sunflower - Spider-Man: Into the Spider-Verse (w/ Swae Lee)",[]],["ALLDAY PROJECT","CRASH",[]],["KiiiKiii","404 (New Era)",[]],["Lim Young Woong","ToTo",[]],["AKMU","Joy, Sorrow, A Beautiful Heart",[]],["I.O.I","Suddenly",[]],["NMIXX","Birthday Wish",[]],["Woo","We Are (w/ Loco, GRAY)",[]]],"MX":[["Fuerza Regida","Suzuki (from GTAVI: The Album)",[]],["Neton Vega","Olimpo",[]],["Neton Vega","RIKI",[]],["Natanael Cano","OLIVIA LA FLAKA",[]],["Neton Vega","Nalguita y Teta",[]],["Victor Mendivil","Cansada",[]],["Omar Camacho","King of Watches",[]],["Neton Vega","Pvta Luna",[]],["LOS DOS DE TAMAULIPAS","Ayúdame",[]],["Junior H","DEMENCIA",[]],["Lenin Ramírez","Todo Lo Fue",[]],["El Rabbanito","Dandy Hats",[]],["Victor Mendivil","Gané",[]],["Fuerza Regida","caperuza",[]],["Lenin Ramírez","Polvo Rosita",[]],["Natanael Cano","Mar Azul",[]],["Omar Camacho","2+2",[]],["Fuerza Regida","TU SANCHO",[]],["Victor Mendivil","FES",[]],["Peso Pluma","daño",[]],["Barbas","Dónde estás",[]],["Bobby Pulido","Desvelado",[]],["Oscar Maydon","Tu Boda",[]],["Moy Bobadilla","Tus Mentiras (En Vivo)",[]],["Fuerza Regida","Marlboro Rojo",[]],["LATIN MAFIA","Te Estoy Correteando",[]],["La Arrolladora Banda El Limón","El Final De Nuestra Historia",[]],["Fuerza Regida","EXCESOS",[]],["El Rabbanito","La Formula",[]],["Bobby Pulido","Se Murió De Amor",[]],["Omar Camacho","La Ciudad del Sol",[]],["Omar Camacho","4x4",[]],["Junior H","Y LLORO",[]],["Calle 24","Que Onda",[]],["Emmanuel Cortes","Amor",[]],["Junior H","LAS NOCHES",[]],["Danny Ocean","Me Rehúso",[]],["KAROL G","Si Antes Te Hubiera Conocido",[]],["Marc Seguí","Tiroteo - Remix",[]],["Fuerza Regida","COQUETA",[]],["Grupo Frontera","EL AMOR DE SU VIDA",[]],["Herencia De Grandes","Ya Borracho",[]],["El Bogueto","Cuando No Era Cantante",[]],["Junior H","MIENTRAS DUERMES",[]],["Chuyin","PUES YA NI PEDO",[]],["Natanael Cano","Perlas Negras",[]]],"NG":[["Peruzzi","INFERNO",[]],["Seyi Vibez","BACK 2 U",[]],["BNXN","If You Like",[]],["Blaqbonez","IKEBE 3000",[]],["Asake","Gratitude",[]],["Davido","B4 B4",[]],["FOLA","miss u ii (nriri)",[]],["Rema","Oh No",[]],["FOLA","waf",[]],["Seyi Vibez","GTA",[]],["Asake","Forgiveness",[]],["Double Gee2x","Ore Agbako",[]],["Blaqbonez","Chanel",[]],["BNXN","Back Outside",[]],["Kidd Carder","Big Bum Bum",[]],["BNXN","Online",[]],["FOLA","treat u right",[]],["FOLA","attention!",[]],["Seyi Vibez","ILOME",[]],["Asake","MCBH",[]],["BNXN","Eja Meja",[]],["Skepta","Aloe Vera",[]],["Blaqbonez","BIG PERFORMER",[]],["Young Jonn","Elumelu",[]],["Seyi Vibez","VOLUME",[]],["FOLA","it's over",[]],["Darkoo","THAT GIRL!",[]],["Victony","SLICK",[]],["FOLA","my type",[]],["FOLA","2am in toronto",[]],["Rema","TEA",[]],["BNXN","16",[]],["Rema","FUN",[]],["Seyi Vibez","PANSA",[]],["TxC","Nakupenda",[]],["Seyi Vibez","DIAMONDS",[]],["FOLA","fine ting (fine $hit)",[]],["BNXN","Shamaya",[]],["Wizkid","Jogodo",[]],["Asake","Wa",[]],["Mayorkun","Home Training",[]],["Asake","Remember",[]],["DJ Maphorisa","MONEY CONSTANT",[]],["OctobersRich","Nnamdi Azikiwe",[]],["TUFF KING","Waka Waka",[]],["Seyi Vibez","GOD",[]],["Davido","I Know Who I Be",[]],["BNXN","Very Soon",[]],["Famous Pluto","Tap Am",[]],["Olamide","Burukutu",[]]],"PH":[["SHEAN","ako ang bagyo",[]],["Mariah Deborah","Na Para Bang",[]],["Esremborak","Mahal Magmahal",[]],["Jin DC","Totoong tayo",[]],["RAPROJECT SIX","Baby 123 (w/ MADAM SAUCE)",[]],["Uncle Dags","Buenos Dias (w/ Fern.)",[]],["HELLMERRY","Summer Crush",[]],["nicole","Panaginip",[]],["groundZERO Records","TMA",[]],["RAPROJECT SIX","Alabang",[]],["fitterkarma","Kalapastangan",[]],["Kyle Raphael","Libu-Libong Buwan (Uuwian)",[]],["Uncle Dags","Weng Weng (w/ Gaspari)",[]],["GEHLEE","Closer",[]],["shirebound","Pahintulot",[]],["fitterkarma","Pag-Ibig ay Kanibalismo II",[]],["Jolianne","Palayo Sa Mundo (w/ Arthur Nery)",[]],["LANY","'Cause You Have To",[]],["Skusta Clee","Since Day One (w/ Flow G)",[]],["Cup of Joe","Multo",[]],["RAPROJECT SIX","Shuloks",[]],["RAPROJECT SIX","Eyes Can't Lie",[]],["HELLMERRY","4:AM",[]],["Esremborak","Tenchu",[]],["Adie","Paraluman",[]],["Hev Abi","ICED COFFEE O MANGO SHAKE",[]],["IV OF SPADES","Kabisado",[]],["kiddotin","Ayoko Maging Kaibigan",[]],["La Mave","Chinay",[]],["DENȲ","Alam Ko Na",[]],["The Script","The Man Who Can't Be Moved",[]],["Arthur Nery","Isa lang",[]],["Adie","Mahika (w/ Janine Berdin)",[]],["shirebound","Waltz of Four Left Feet",[]],["La Mave","Dominga (w/ Nateman)",[]],["Uncle Dags","1990",[]],["NIKI","Backburner",[]],["Arthur Nery","TAKE ALL THE LOVE",[]],["LANY","13",[]],["Yuridope","Rosas (w/ Skusta Clee)",[]],["Up Dharma Down","Unti-Unti",[]],["Bruno Mars","Risk It All",[]],["Shanti Dope","City Girl",[]],["Hev Abi","Paano Ka Ba?",[]]],"PL":[["730 Huncho","Mami",[]],["Young Multi","Red Alabaster (Intro)",[]],["Hellfield","BlackBerry",[]],["Otsochodzi","NIENAWIDZĘ WARSZAWY",[]],["Julia Wieniawa","Chwila zapomnienia",[]],["Stynu","BALETY",[]],["Otsochodzi","WIĘCEJ NIEBA",[]],["Tax Free","WAVY (LEJ MI BBY)",[]],["OG ENZO","3K (KRESKA KROPKA KRESKA)",[]],["CrackHouse","STRAIGHT OUTTA CRACKHOUSE",[]],["Otsochodzi","SŁOWA BOLĄ",[]],["maja janowska","LEJ MI BBY",[]],["Major SPZ","Tajlandia",[]],["Vito Bambino","Mimo najlepszych chęci",[]],["MJ Deli","DELI SUPREME",[]],["Kaz Bałagane","Kulig",[]],["White 2115","CALIFORNIA LOVE",[]],["Sequento","Stan Deweloperski",[]],["PRO8L3M","VHS",[]],["Otsochodzi","GIŃ ZA MNIE",[]],["Otsochodzi","Luty",[]],["Hellfield","Mallorca",[]],["Cypis","Niegrzeczna Studentka",[]],["Fukaj","Zabiorę Cię Tam",[]],["Malik Montana","Abi Mosa",[]],["Majki","Kwadrat",[]],["White 2115","TROFEA",[]],["Majki","Pach Pach",[]],["PRO8L3M","Molly",[]],["Aitch","RMB (Ring My Bell) - Polish Remix",[]],["Tax Free","Saudi",[]],["Męskie Granie Orkiestra","Nareszcie",[]],["bambi","CYRK",[]],["Kwestia 07","Toksyna",[]],["SVM!R","SWITCH",[]],["Paluch","Bez Strachu",[]],["Kaz Bałagane","Zakochany kundel",[]],["David Tango","Napalona",[]],["Naarly","WASTED",[]],["Sequento","Bamboleo",[]],["TACONAFIDE","Tamagotchi",[]],["Pezet","Plan B",[]],["PRO8L3M","Ground Zero",[]],["Zalia","tylko kochaj mnie",[]]],"SE":[["Keisha","Mayday",[]],["Anis Don Demina","Superman",[]],["Victor Leksell","Tänk om",[]],["Keisha","Vem du än är",[]],["Anis Don Demina","SPRING!",[]],["ALEX","Olyckligt kär",[]],["MadMaxCUX","TUFFE LISA",[]],["Anis Don Demina","Vem e som oss",[]],["Swedish House Mafia","Happiness Is So Sad",[]],["Victor Leksell","Azalea",[]],["Zara Larsson","Midnight Sun",["AU"]],["Molly Sandén","Lost and found",[]],["Hasselyra","Höjer Våra Glas",[]],["Robyn","Dancing On My Own",[]],["GENER8ION","STORM II",[]],["Teddy Swims","Mr. Know It All",[]],["Korslagda","Är det här det är party",[]],["Newkid","Kom över",[]],["Bolaget","Kan Inte Gå",[]]],"TH":[["GAVIN:D","อย่ามากกว่าฉันก็พอ (Jealous)",[]],["GAVIN:D","ได้แค่เดินมาส่ง (The Last Walk)",[]],["BLVCKHEART","เมื่อไหร่จะมี (มีใจให้กัน)",[]],["Mirrr","ขึ้นใจ (3am call)",[]],["BLVCKHEART","Airdrop",[]],["PUN","เขียว เหลือง แดง (Get high)",[]],["DICEBLUE","รอ SIS (TER)",[]],["PUN","Living Death",[]],["atom chanakan","Reborn",[]],["PORZAX","ไม่ได้เลวขนาดนั้น",[]],["บุ๊ค ศุภกาญจน์","มาเฟียบ้านนอก",[]],["PURPEECH","กลัวว่าฉันจะไม่เสียใจ (Fear)",[]],["Z9","ไม่รักดีกว่า",[]],["FREEHAND","เมื่อถูกค้นพบ (Finally She Found.)",[]],["9tokyo","สายไป",[]],["RESOA","GENZ",[]],["PUN","รักให้เธอได้รู้ (Proof.)",[]],["BLVCKHEART","อยากจะกอดเธอนาน ๆ (HAVE A GOOD TIME)",[]],["guncharlie","ไม่ได้ลืมแค่ไม่ได้เจอ - Flashback",[]],["Only Monday","ดีใจที่ตรงนั้นไม่ใช่เรา",[]],["guncharlie","จากกันโดยสมบูรณ์",[]],["PUN","ขอแค่นี้ (Forever n ever)",[]],["LISA","SaWaDiKa",[]],["Saran","กลัวความเสียใจ",[]],["JOEY PHUWASIT","เด๋อ",[]],["Palmy","สนิทใจ",[]],["SERIOUS BACON","เผื่อเราไม่ต้องลาจากกัน (Crossroads)",[]],["อะตอม ชนกันต์","PLEASE",[]],["BLVCKHEART","One Of My Life",[]],["YOUNGOHM","แค่เธอแค่เธอ",[]],["PROXIE","ขี้แง (Boys Don't Cry)",[]],["PUN","ที่เดิม",[]],["BOWKYLION","นาฬิกาทราย (sign)",[]],["BOWKYLION","ที่คั่นหนังสือ (Sometimes)",[]],["LISA","Tarantino",[]],["Three Man Down","รักใครไม่ไหว",[]],["WANYAi","ดาวตก (Wish)",[]],["PURPEECH","ไม่มีวันไหนที่ไม่คิดถึง (starlost.)",[]],["Mild","ซาโยนาระ",[]],["PUN","KRYPTONITE",[]],["Lomosonic","ขอ (WARM EYES)",[]],["Yes'sir Days","ฝากให้เขารัก",[]],["K6Y","ถ้าเจอกันอีกครั้ง",[]],["SPF","9 นาฬิกา",[]],["PUN","DAY ONE",[]]],"TR":[["Mabel Matiz","Umrumdışı",[]],["manifest","TRALALA",[]],["BLOK3","Sebebi Yar",[]],["Aykut Aksöz","Yüreğime mi Sorsam?",[]],["Ahiyan","Kralın Kızı",[]],["BLOK3","Kayıp Kalp",[]],["Burak Bulut","Garson (w/ İrem Derici)",[]],["Bora Duran","Döndüm",[]],["BLOK3","Çok Güzel Gülüyorsun (w/ Poizi)",[]],["BLOK3","Kırgınım",[]],["Candan Erçetin","Gamsız Hayat",[]],["AURA","2036",[]],["manifest","Hileli (w/ Ajda Pekkan)",[]],["Motive","YIN YANG",[]],["Yung Ouzo","en baba rüzgarda yanar ateş (GODBLESS)",[]],["Eypio","Şahidim",[]],["manifest","Toz Pembe",[]],["Emir Can İğrek","Geçmiş Geçmişte",[]],["Motive","Yüce Aşk",[]],["CRUSH","Benim Olsana",[]],["BLOK3","Değiştiremezsin Yazılmışsa",[]],["Ebru Gündeş","Beyaz",[]],["BLOK3","KUSURA BAKMA",[]],["Poizi","Başımda Belalar",[]],["Wegh","ALO",[]],["manifest","pVg - Manifest Live Remix",[]],["Eypio","Sana Rağmen",[]],["Ati242","Babyglock",[]],["Poizi","UYUYAMADIN DİMİ?",[]],["Motive","Akila",[]],["CRUSH","CRUSH!",[]],["Zeki Arkun","KISKANÇ",[]],["Murat Boz","Gün Ağardı",[]],["Mabel Matiz","Ha Leylim",[]],["Ezhel","Bana Ne Bu Sevdalardan",[]],["Selcan","Senden Adam Olmaz",[]],["Ati242","Maraton",[]],["Onur Atmaca","Oy Dedim",[]],["Zeki Arkun","AYRILIYORUZ",[]],["MERO","Olurmusun? (w/ Poizi)",[]],["UZI","Aklın Hep Bende",[]],["Serkan Nişancı","Eller Üzer",[]],["manifest","Daha İyi",[]],["Yalın","Son Aşkım - Remastered",[]],["Zeki Arkun","VEDA BUSESİ",[]],["KAVAK","TSS (w/ BAKAN)",[]],["Bengü","Saygımdan",[]],["Elif Buse Doğan","Yangın Yeri",[]],["Semicenk","Çıkmaz Bir Sokakta",[]],["İzel","Işıklı Yol",[]]],"US":[["Whiskey Myers","Broken Window Serenade",[]],["Steve Lacy","the feeling",[]],["Ella Langley","Be Her",["CA"]],["Ella Langley","weren't for the wind",["CA"]],["Drake","Janice STFU",["CA"]],["Noah Kahan","Stick Season",["CA"]]],"ZA":[["DJ Zinhle","Nayvee's Prayer",[]],["Mshinwemali","Myeke",[]],["Tman Xpress","Remember",[]],["G-Jealous","Luqale sakudlala",[]],["Thatohatsi","Ama hem hem",[]],["Zulu Queens","Distance",[]],["DJ Zinhle","Baba Yilwa",[]],["Feza","Umaqondana",[]],["Mzukulu","Isesheli",[]],["SIHAYO","Owabulala uBaba",[]],["Bello B","BETHII BETHII",[]],["Empro","Polo",[]],["Nkeshemba","Usungikhombisile",[]],["Sami'Kay","Amanxeba",[]],["Feza","Sengithole Omunye",[]],["Calvin Fallo","Everybody Wanna Be In Love",[]],["Ntencane","UKHETHE MINA",[]],["Royal MusiQ","H's On The Table",[]],["Mihlali The Guy","Wo Lo",[]],["Focalistic","Gumba Fire",[]],["W4DE","TEZE",[]],["Khazozo","i1000",[]],["Mahostela 97","Yimi umaqondana",[]],["Darque","uMoya 2.0 - Tycoon Remix",[]],["Culture Motion","Ingoma Ezimnandi (iGwijo)",[]],["Sam Deep","Shela",[]],["Inkos'yamagcokama","AMABULAWO",[]],["DJ Maphorisa","Abantwana Bakho",[]],["Skhanga","Thando lwathola kabi",[]],["Novex","SASEZOLA",[]],["Empro","Polo - Skuva Remix",[]],["Natiey Lepaka","MaDouble",[]],["Makhadzi Entertainment","Sanamarena",[]],["Njabulo Langa","uBhanyazile",[]],["MENZI MUSIC","Vuma",[]],["Zee Nxumalo","Ngithathiwe",[]],["Mr JazziQ","Katalia",[]],["Isitha sama ex","Imfene Yakho",[]],["JIKIJIKI","Ngzomthatha",[]],["G-Jealous","Umaqondana",[]],["Ayeeh Beats Babethe","Commander",[]],["2Break4","Sphalaphala",[]],["Nkeshemba","Isibaya Sikababa",[]],["Mzukulu","Thandolwethu",[]],["Nkeshemba","Ngixolele Mtanami",[]],["Dlala Thukzin","Ungenzani",[]],["Inkos'yamagcokama","ISAZOCHOMELANA",[]],["UMnotho","U XA",[]],["Uncool MC","Setla",[]],["Sam Deep","Thandaza",[]]]}/*END*/;
+  var DATA_DATE = '10 Nov 2026';
+  var KEY = 'chartchase.v1';
+
+  var I = {
+    x:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    eyeOff:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10 10 0 0 1 12 20c-7 0-10-8-10-8a18 18 0 0 1 5.06-5.94M9.9 4.24A9 9 0 0 1 12 4c7 0 10 8 10 8a18 18 0 0 1-2.16 3.19M1 1l22 22"/></svg>',
+    eye:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+    shuffle:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>',
+    next:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4l10 8-10 8V4zM19 5v14"/></svg>',
+    play:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z"/></svg>',
+    trophy:'<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#FFB547" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg>'
+  };
+
+  function fresh(){
+    return { screen:'setup', players:[], host:0, rounds:10, songs:3, graded:true,
+             round:1, used:[], country:null, song:1, history:[], search:'' };
+  }
+  var S = load() || fresh();
+  var modal = null;
+
+  function load(){ try{ var s = localStorage.getItem(KEY); return s ? JSON.parse(s) : null; }catch(e){ return null; } }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+  function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function col(i){ return COLORS[i % COLORS.length]; }
+  function ptsFor(song){ return S.graded ? Math.max(1, S.songs - song + 1) : 1; }
+  function guessers(){ return S.players.map(function(p,i){return {p:p,i:i};}).filter(function(x){return x.i!==S.host;}); }
+  function ranked(){ return guessers().slice().sort(function(a,b){ return b.p.score - a.p.score; }); }
+  function countryName(code){ for(var i=0;i<COUNTRIES.length;i++) if(COUNTRIES[i][0]===code) return COUNTRIES[i][1]; return code; }
+  function hasLocal(code){ return !!(LOCAL[code] && LOCAL[code].length); }
+  function cleanTitle(t){ return t.replace(/\s*\((w\/|feat|with)[^)]*\)/ig,'').replace(/\s+-\s+(from|remaster).*$/i,''); }
+  function songUrl(s){ return 'https://open.spotify.com/search/' + encodeURIComponent(s[0] + ' ' + cleanTitle(s[1])); }
+  function curSong(){ return hasLocal(S.country) && S.queue ? LOCAL[S.country][S.queue[S.qpos % S.queue.length]] : null; }
+  function shuffled(n){ var a=[]; for(var i=0;i<n;i++) a.push(i); for(i=n-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function alsoText(list){
+    if(!list || !list.length) return 'Only charts here';
+    return 'Also charts in ' + list.map(countryName).join(', ');
+  }
+  function searchUrl(code){ return 'https://open.spotify.com/search/' + encodeURIComponent('Top 50 ' + countryName(code)) + '/playlists'; }
+  function spotifyUrl(code){ return PL[code] ? 'https://open.spotify.com/playlist/' + PL[code] : searchUrl(code); }
+
+  // ---------- Spotify remote play (Web API, PKCE login) ----------
+  // Paste your Spotify app's Client ID here, or enter it once in the app's setup screen.
+  var SPOTIFY_CLIENT_ID = '';
+  var SP_KEY = 'chartchase.spotify';
+  var SP_SCOPES = 'user-read-playback-state user-modify-playback-state';
+  var CAN_SPOTIFY = location.protocol === 'https:' && !/claude/i.test(location.hostname);
+  var SP = loadSP();
+  var spMsg = '', spBusy = false;
+
+  function loadSP(){ try{ return JSON.parse(localStorage.getItem(SP_KEY)) || {}; }catch(e){ return {}; } }
+  function saveSP(){ try{ localStorage.setItem(SP_KEY, JSON.stringify(SP)); }catch(e){} }
+  function spClientId(){ return SPOTIFY_CLIENT_ID || SP.cid || ''; }
+  function spConnected(){ return CAN_SPOTIFY && !!SP.refresh; }
+  function redirectUri(){ return location.origin + location.pathname; }
+  function b64url(bytes){ var s=''; bytes.forEach(function(b){ s+=String.fromCharCode(b); }); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+
+  async function spLogin(){
+    var cid = spClientId(); if(!cid) return;
+    var rnd = new Uint8Array(48); crypto.getRandomValues(rnd);
+    var verifier = b64url(rnd);
+    var hash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
+    SP.verifier = verifier; saveSP();
+    location.href = 'https://accounts.spotify.com/authorize?' + new URLSearchParams({
+      response_type:'code', client_id:cid, scope:SP_SCOPES, redirect_uri:redirectUri(),
+      code_challenge_method:'S256', code_challenge:b64url(hash)
+    });
+  }
+  async function spToken(params){
+    var r = await fetch('https://accounts.spotify.com/api/token', { method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:new URLSearchParams(params) });
+    var j = await r.json().catch(function(){ return {}; });
+    if(!r.ok) throw new Error(j.error_description || j.error || ('Login failed ('+r.status+')'));
+    SP.access = j.access_token; SP.exp = Date.now() + (j.expires_in - 60) * 1000;
+    if(j.refresh_token) SP.refresh = j.refresh_token;
+    saveSP();
+  }
+  async function spHandleRedirect(){
+    var q = new URLSearchParams(location.search);
+    if(!q.get('code') && !q.get('error')) return;
+    history.replaceState(null, '', redirectUri());
+    if(q.get('error')){ spMsg = 'Spotify login was cancelled.'; return; }
+    try{
+      await spToken({ grant_type:'authorization_code', code:q.get('code'), redirect_uri:redirectUri(), client_id:spClientId(), code_verifier:SP.verifier||'' });
+      spMsg = 'Spotify connected.';
+    }catch(e){ spMsg = 'Spotify login failed: ' + e.message; }
+  }
+  async function spApi(method, path, body, retried){
+    if(!SP.access || Date.now() > (SP.exp||0)) await spToken({ grant_type:'refresh_token', refresh_token:SP.refresh, client_id:spClientId() });
+    var r = await fetch('https://api.spotify.com/v1' + path, { method:method,
+      headers:{ Authorization:'Bearer ' + SP.access, 'Content-Type':'application/json' }, body: body ? JSON.stringify(body) : undefined });
+    if(r.status === 401 && !retried){ SP.exp = 0; return spApi(method, path, body, true); }
+    if(r.status === 204) return null;
+    var j = await r.json().catch(function(){ return null; });
+    if(!r.ok){ var e = new Error((j && j.error && j.error.message) || ('Spotify error ' + r.status)); e.status = r.status; e.reason = j && j.error && j.error.reason; throw e; }
+    return j;
+  }
+  async function spFindUri(song){
+    SP.uris = SP.uris || {};
+    var key = song[0] + '|' + song[1];
+    if(SP.uris[key]) return SP.uris[key];
+    var title = cleanTitle(song[1]).replace(/\s+-\s+(ao vivo|en vivo|live).*$/i,'');
+    var artist = song[0].split(/,| & | e | x /)[0];
+    var tries = ['track:"' + title + '" artist:"' + artist + '"', artist + ' ' + title];
+    for(var i=0;i<tries.length;i++){
+      var j = await spApi('GET', '/search?type=track&limit=5&q=' + encodeURIComponent(tries[i]));
+      var items = (j && j.tracks && j.tracks.items) || [];
+      if(items.length){ SP.uris[key] = items[0].uri; saveSP(); return items[0].uri; }
+    }
+    return null;
+  }
+  async function spPickDevice(){
+    var j = await spApi('GET', '/me/player/devices');
+    var ds = (j && j.devices || []).filter(function(d){ return !d.is_restricted; });
+    return ds.filter(function(d){ return d.is_active; })[0] || ds.filter(function(d){ return /smartphone/i.test(d.type); })[0] || ds[0] || null;
+  }
+  async function spPlay(song){
+    spBusy = true; spMsg = 'Finding the song…'; render(true);
+    try{
+      var uri = await spFindUri(song);
+      if(!uri){ spMsg = 'Couldn\'t find this one on Spotify. Pick a different song.'; return; }
+      var dev = await spPickDevice();
+      if(!dev){ spMsg = 'No Spotify device found. Open the Spotify app on this phone for a second, come back and tap Play again.'; return; }
+      await spApi('PUT', '/me/player/play?device_id=' + encodeURIComponent(dev.id), { uris:[uri] });
+      spMsg = 'Playing on ' + dev.name;
+    }catch(e){
+      spMsg = e.reason === 'PREMIUM_REQUIRED' ? 'Spotify Premium is needed to play from the game.' :
+              e.status === 404 ? 'Spotify isn\'t active. Open the Spotify app for a second, then tap Play again.' :
+              'Spotify: ' + e.message;
+    }finally{ spBusy = false; render(true); }
+  }
+  async function spPause(){
+    try{ await spApi('PUT', '/me/player/pause'); spMsg = 'Paused'; }catch(e){ spMsg = 'Spotify: ' + e.message; }
+    render(true);
+  }
+  function spDisconnect(){ SP = { cid: SP.cid }; saveSP(); spMsg = 'Spotify disconnected.'; }
+
+  function spSetupCard(){
+    if(!CAN_SPOTIFY) return '';
+    if(spConnected()) return '<div class="card row"><div class="grow stack" style="gap:2px"><span style="font-weight:600;font-size:15px">Spotify connected</span>'+
+      '<span class="muted" style="font-size:13px">Songs play on the host\'s Spotify without leaving the game</span></div>'+
+      '<button class="btn ghost" style="min-height:44px;font-size:14px" data-a="spout">Disconnect</button></div>';
+    var cid = spClientId();
+    return '<div class="card stack"><span style="font-weight:600;font-size:15px">Play songs from the game</span>'+
+      '<span class="muted" style="font-size:13px">Connect the host\'s Spotify Premium so songs play without switching apps.</span>'+
+      (cid ? '' : '<form class="row" style="gap:8px" data-form="cid"><label class="sr" for="cid">Spotify Client ID</label>'+
+        '<input id="cid" type="text" placeholder="Spotify Client ID" autocomplete="off" spellcheck="false"><button class="btn" type="submit">Save</button></form>')+
+      (cid ? '<button class="btn" data-a="splogin">Connect Spotify</button>' : '')+'</div>';
+  }
+
+  var app = document.getElementById('app');
+
+  function render(keepScroll){
+    save();
+    var h = ({setup:vSetup, pick:vPick, play:vPlay, reveal:vReveal, final:vFinal}[S.screen] || vSetup)();
+    if(modal) h += modal;
+    app.innerHTML = h;
+    if(!keepScroll) window.scrollTo(0,0);
+  }
+
+  // ---------- Screens ----------
+  function vSetup(){
+    var rows = S.players.map(function(p,i){
+      var c = col(i), isHost = i===S.host;
+      return '<div class="card row">'+
+        '<div class="avatar" style="background:'+c.c+';color:'+c.ink+'">'+esc(p.name.charAt(0).toUpperCase())+'</div>'+
+        '<div class="grow stack" style="gap:2px"><span style="font-weight:600;font-size:16px">'+esc(p.name)+'</span>'+
+        (isHost ? '<span class="muted" style="font-size:13px">Host · plays the songs</span>'
+                : '<button class="btn link" style="min-height:28px;padding:0;justify-content:flex-start;font-size:13px" data-a="host" data-i="'+i+'">Make host</button>')+
+        '</div>'+
+        '<button class="icon" aria-label="Remove '+esc(p.name)+'" data-a="rm" data-i="'+i+'">'+I.x+'</button></div>';
+    }).join('');
+    var enough = guessers().length >= 1;
+    return ''+
+      '<div class="stack" style="gap:6px"><div class="brand">HitHunter</div>'+
+      '<p class="muted" style="font-size:15px;line-height:1.45">Hear a country\'s Top 50. Shout the country. First right answer scores.</p></div>'+
+      '<section class="stack"><div class="label">Players · '+S.players.length+'</div>'+ rows +
+      '<form class="row" style="gap:8px" data-form="add"><label class="sr" for="newp">Player name</label>'+
+      '<input id="newp" type="text" placeholder="'+(S.players.length? 'Add a player' : 'Add the host first')+'" autocomplete="off" maxlength="20" enterkeyhint="done">'+
+      '<button class="btn" type="submit">Add</button></form></section>'+
+      '<section class="stack"><div class="label">Rounds</div><div class="seg">'+
+        [5,10,15].map(function(n){return '<button aria-pressed="'+(S.rounds===n)+'" data-a="rounds" data-n="'+n+'">'+n+'</button>';}).join('')+
+      '</div>'+
+      '<div class="card row"><div class="grow stack" style="gap:2px"><span style="font-weight:600;font-size:15px">Fewer points per extra song</span>'+
+      '<span class="muted" style="font-size:13px">'+(S.graded? 'Song 1 = 3 pts, song 2 = 2, song 3 = 1' : 'Every right answer = 1 pt')+'</span></div>'+
+      '<button class="switch" role="switch" aria-checked="'+S.graded+'" aria-label="Fewer points per extra song" data-a="graded"></button></div></section>'+
+      spSetupCard()+(spMsg && S.screen==='setup' ? '<p class="muted" style="font-size:14px">'+esc(spMsg)+'</p>' : '')+
+      '<div class="bottom">'+
+      (!enough ? '<p class="muted" style="text-align:center;font-size:14px">Add the host plus at least one guesser.</p>' : '')+
+      '<button class="btn primary" data-a="start" '+(enough?'':'disabled')+'>Start game</button></div>';
+  }
+
+  function vPick(){
+    var q = S.search.trim().toLowerCase();
+    var left = COUNTRIES.filter(function(c){ return S.used.indexOf(c[0])<0 && (!q || c[1].toLowerCase().indexOf(q)>=0 || c[0].toLowerCase()===q); });
+    function row(c){
+      var sel = S.country===c[0], n = hasLocal(c[0]) ? LOCAL[c[0]].length : 0;
+      return '<button class="country" aria-pressed="'+sel+'" data-a="choose" data-c="'+c[0]+'"><span class="code">'+c[0]+'</span>'+
+        '<span class="grow" style="font-size:16px;font-weight:600">'+esc(c[1])+'</span>'+
+        '<span class="muted" style="font-size:13px">'+(sel?'Selected':(n? n+' local songs':''))+'</span></button>';
+    }
+    var ready = left.filter(function(c){ return hasLocal(c[0]); });
+    var other = left.filter(function(c){ return !hasLocal(c[0]); });
+    var items = (ready.length ? '<div class="label" style="margin-top:4px">Local songs ready · '+ready.length+'</div>'+ready.map(row).join('') : '')+
+      (other.length ? '<div class="label" style="margin-top:12px">Full chart only · not filtered</div>'+other.map(row).join('') : '') ||
+      '<p class="muted">No countries match.</p>';
+    return ''+
+      '<div class="topbar"><span>Round '+S.round+' of '+S.rounds+'</span><span class="pill">'+I.eyeOff+'Host only</span></div>'+
+      '<div class="stack" style="gap:6px"><h1 style="font-size:28px;line-height:1.15">Pick a secret country</h1>'+
+      '<p class="muted" style="font-size:15px">Tilt the phone away from the back seat.</p></div>'+
+      '<div class="row" style="gap:8px"><label class="sr" for="cs">Search countries</label>'+
+      '<input id="cs" type="search" placeholder="Search countries" value="'+esc(S.search)+'" autocomplete="off">'+
+      '<button class="btn" style="width:48px;padding:0" aria-label="Random country" data-a="random">'+I.shuffle+'</button></div>'+
+      (DATA_DATE.indexOf('/*')<0 ? '<p class="muted" style="font-size:13px">International hits removed · charts from '+esc(DATA_DATE)+'</p>' : '')+
+      '<div class="list" id="clist">'+items+'</div>'+
+      '<div class="bottom"><button class="btn primary" data-a="lock" '+(S.country?'':'disabled')+'>'+(S.country? 'Lock in '+esc(countryName(S.country)) : 'Choose a country')+'</button>'+
+      '<button class="btn link" data-a="menu">Scores &amp; menu</button></div>';
+  }
+
+  function vPlay(){
+    var bars=''; for(var k=1;k<=S.songs;k++) bars += '<span class="'+(k<=S.song?'on':'')+'"></span>';
+    var pts = ptsFor(S.song);
+    var tiles = S.players.map(function(p,i){
+      var c = col(i);
+      if(i===S.host) return '<div class="player host"><b style="font-size:18px;font-weight:600">'+esc(p.name)+'</b><span>Host</span></div>';
+      return '<button class="player" style="background:'+c.bg+';border-color:'+c.c+'" data-a="award" data-i="'+i+'"><b>'+esc(p.name)+'</b><span>'+p.score+' pts</span></button>';
+    }).join('');
+    var last = S.song >= S.songs;
+    return ''+
+      '<div class="topbar"><span>Round '+S.round+' of '+S.rounds+'</span>'+
+      '<button class="peek" id="peek" aria-label="Hold to see the country">'+I.eye+'<span id="peekt">Hold to peek</span></button></div>'+
+      '<div class="card stack" style="gap:14px;padding:20px;border-radius:20px"><div class="progress">'+bars+'</div>'+
+      '<div class="row" style="justify-content:space-between;align-items:baseline"><span class="display" style="font-size:30px;font-weight:700">Song '+S.song+' of '+S.songs+'</span>'+
+      '<span class="display" style="font-size:22px;font-weight:700;color:var(--accent)">'+pts+' pt'+(pts>1?'s':'')+'</span></div>'+
+      (curSong() && spConnected()
+        ? '<p class="muted" style="font-size:14px;line-height:1.5">A local hit, picked at random. It plays on the host\'s Spotify.</p>'+
+          '<div class="row" style="gap:8px"><button class="btn primary grow" style="min-height:56px;font-size:17px" data-a="spplay" '+(spBusy?'disabled':'')+'>'+I.play+'Play song '+S.song+'</button>'+
+          '<button class="btn" style="min-height:56px" aria-label="Pause" data-a="sppause"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg></button></div>'+
+          (spMsg ? '<p class="muted" style="font-size:13px;text-align:center" role="status">'+esc(spMsg)+'</p>' : '')+
+          '<div class="row" style="justify-content:space-between"><button class="btn link" style="min-height:36px;font-size:13px;color:var(--muted);padding:0" data-a="skipsong">Pick a different song</button>'+
+          '<a href="'+songUrl(curSong())+'" target="_blank" rel="noopener" style="font-size:13px;color:var(--muted)">Open in Spotify</a></div>'
+      : curSong()
+        ? '<p class="muted" style="font-size:14px;line-height:1.5">A local hit, picked at random. Tap to play it in Spotify, then come back here.</p>'+
+          '<a class="btn spotify" href="'+songUrl(curSong())+'" target="_blank" rel="noopener">'+I.play+'Play song '+S.song+' in Spotify</a>'+
+          '<button class="btn link" style="min-height:36px;font-size:13px;color:var(--muted)" data-a="skipsong">Can\'t find it? Pick a different song</button>'
+        : '<p class="muted" style="font-size:14px;line-height:1.5">Play a song from the country\'s Top 50. Skip anything that charts in other countries too.</p>'+
+          '<a class="btn spotify" href="'+spotifyUrl(S.country)+'" target="_blank" rel="noopener">'+I.play+'Open the Top 50 in Spotify</a>'+
+          '<a href="'+searchUrl(S.country)+'" target="_blank" rel="noopener" style="font-size:13px;text-align:center;color:var(--muted)">Wrong playlist? Search Spotify instead</a>')+
+      '</div>'+
+      '<section class="stack"><div class="label">Who said it first?</div><div class="players">'+tiles+'</div></section>'+
+      '<div class="bottom">'+
+      (last ? '<button class="btn" data-a="nobody">Nobody got it · reveal</button>'
+            : '<button class="btn" data-a="nextsong">No one yet · next song for '+ptsFor(S.song+1)+' pt'+(ptsFor(S.song+1)>1?'s':'')+' '+I.next+'</button>')+
+      '<button class="btn link" data-a="nobody">Give up and reveal</button></div>';
+  }
+
+  function vReveal(){
+    var h = S.history[S.history.length-1];
+    var w = h && h.winner!=null ? S.players[h.winner] : null;
+    var wc = w ? col(h.winner) : null;
+    var stand = ranked().map(function(x,n){
+      var c = col(x.i), isW = h && h.winner===x.i;
+      return '<div class="stand" style="'+(isW?'background:'+c.bg:'')+'"><span class="n">'+(n+1)+'</span>'+
+        '<span class="grow" style="font-size:17px;font-weight:'+(isW?700:600)+'">'+esc(x.p.name)+'</span>'+
+        (isW?'<span style="font-size:13px;font-weight:600;color:'+c.c+'">+'+h.points+'</span>':'')+
+        '<span class="pts">'+x.p.score+'</span></div>';
+    }).join('');
+    var lastRound = S.round >= S.rounds;
+    return ''+
+      '<div class="topbar"><span>Round '+S.round+' of '+S.rounds+' · done</span></div>'+
+      '<div class="hero"><span class="label" style="font-size:14px">The country was</span>'+
+      '<span class="big">'+esc(countryName(h.country))+'</span>'+
+      (w ? '<span style="font-size:16px">'+esc(w.name)+' got it on song '+h.song+'</span>'+
+           '<span class="display" style="font-size:20px;font-weight:700;color:'+wc.c+';background:'+wc.bg+';padding:6px 14px;border-radius:999px">+'+h.points+' pt'+(h.points>1?'s':'')+'</span>'
+         : '<span style="font-size:16px" class="muted">Nobody got it this time</span>')+
+      '</div>'+
+      (h.songs && h.songs.length ? '<section class="stack" style="gap:8px"><div class="label">Songs played</div>'+h.songs.map(function(s){ return '<div class="card stack" style="gap:2px"><span style="font-weight:600">'+esc(cleanTitle(s[1]))+'</span><span class="muted" style="font-size:13px">'+esc(s[0])+' · '+esc(alsoText(s[2]))+'</span></div>'; }).join('')+'</section>' : '')+
+      '<section class="stack" style="gap:8px"><div class="label">Standings</div>'+stand+'</section>'+
+      '<div class="bottom"><button class="btn primary" data-a="nextround">'+(lastRound?'See the winner':'Next round')+'</button>'+
+      '<div class="row" style="gap:10px"><button class="btn ghost grow" data-a="undo">Undo</button>'+
+      (lastRound?'':'<button class="btn ghost grow" data-a="end">End game</button>')+'</div></div>';
+  }
+
+  function vFinal(){
+    var r = ranked();
+    var top = r[0];
+    var tie = r.length>1 && r[1].p.score===top.p.score;
+    function col3(x, place, height){
+      if(!x) return '<div class="col"></div>';
+      var c = col(x.i);
+      return '<div class="col"><span>'+esc(x.p.name)+'</span><div class="blk" style="height:'+height+'px;background:'+c.bg+';border-color:'+c.c+'">'+
+        '<span class="display" style="font-size:24px;font-weight:700">'+place+'</span><span class="muted" style="font-size:13px">'+x.p.score+' pts</span></div></div>';
+    }
+    var chips = S.history.map(function(h){
+      return '<span class="chip">'+esc(countryName(h.country))+' · '+(h.winner!=null? esc(S.players[h.winner].name) : 'nobody')+'</span>';
+    }).join('');
+    return ''+
+      '<div class="topbar"><span>Game over · '+S.history.length+' round'+(S.history.length===1?'':'s')+'</span></div>'+
+      '<div class="stack" style="align-items:center;text-align:center;gap:8px;padding-top:8px">'+I.trophy+
+      '<span class="label" style="font-size:14px">'+(tie?'It\'s a tie':'Winner')+'</span>'+
+      '<span class="display" style="font-size:52px;font-weight:700;line-height:1">'+esc(tie? r.filter(function(x){return x.p.score===top.p.score;}).map(function(x){return x.p.name;}).join(' & ') : top.p.name)+'</span>'+
+      '<span class="display" style="font-size:22px;font-weight:700;color:var(--accent)">'+top.p.score+' pts</span></div>'+
+      '<div class="podium">'+col3(r[1],2,90)+col3(r[0],1,130)+col3(r[2],3,66)+'</div>'+
+      (chips? '<section class="stack" style="gap:8px"><div class="label">Countries this game</div><div class="chips">'+chips+'</div></section>' : '')+
+      '<div class="bottom"><button class="btn primary" data-a="rematch">Rematch, same players</button>'+
+      '<button class="btn link" data-a="newgame">Change players</button></div>';
+  }
+
+  function menuSheet(){
+    var stand = ranked().map(function(x,n){ return '<div class="stand"><span class="n">'+(n+1)+'</span><span class="grow" style="font-weight:600">'+esc(x.p.name)+'</span><span class="pts">'+x.p.score+'</span></div>'; }).join('');
+    return '<div class="modal" data-a="closemenu"><div class="sheet" role="dialog" aria-modal="true" aria-label="Scores and menu" data-stop="1">'+
+      '<h2 style="font-size:22px">Scores</h2>'+stand+
+      '<button class="btn ghost" data-a="end">End game now</button>'+
+      '<button class="btn ghost" data-a="newgame">Start over (new players)</button>'+
+      '<button class="btn" data-a="closemenu">Close</button></div></div>';
+  }
+
+  // ---------- Actions ----------
+  function markPlayed(){ var c=curSong(); if(!c) return; S.played=S.played||[]; if(!S.played.length || S.played[S.played.length-1][1]!==c[1]) S.played.push(c); }
+  function newRound(){ S.country=null; S.song=1; S.search=''; S.screen='pick'; }
+
+  var A = {
+    host:function(d){ S.host=+d.i; },
+    rm:function(d){ var i=+d.i; S.players.splice(i,1); if(S.host>=S.players.length || S.host===i) S.host=0; else if(i<S.host) S.host--; },
+    rounds:function(d){ S.rounds=+d.n; },
+    graded:function(){ S.graded=!S.graded; },
+    start:function(){ if(guessers().length<1) return; S.players.forEach(function(p){p.score=0;}); S.round=1; S.used=[]; S.history=[]; newRound(); },
+    choose:function(d){ S.country=d.c; },
+    random:function(){ var left=COUNTRIES.filter(function(c){return S.used.indexOf(c[0])<0;}); if(left.length){ S.country=left[Math.floor(Math.random()*left.length)][0]; S.search=''; } },
+    lock:function(){ if(!S.country) return; spMsg=''; S.song=1; S.played=[]; S.qpos=0; S.queue = hasLocal(S.country) ? shuffled(LOCAL[S.country].length) : null; S.screen='play'; },
+    award:function(d){ var i=+d.i, pts=ptsFor(S.song); S.players[i].score+=pts; markPlayed(); S.history.push({round:S.round,country:S.country,winner:i,points:pts,song:S.song,songs:S.played.slice()}); S.used.push(S.country); S.screen='reveal'; },
+    nextsong:function(){ if(S.song<S.songs){ markPlayed(); S.qpos++; S.song++; spMsg=''; } },
+    skipsong:function(){ if(S.queue) S.qpos++; spMsg=''; },
+    nobody:function(){ markPlayed(); S.history.push({round:S.round,country:S.country,winner:null,points:0,song:S.song,songs:S.played.slice()}); S.used.push(S.country); S.screen='reveal'; },
+    undo:function(){ var h=S.history.pop(); if(!h) return; if(h.winner!=null) S.players[h.winner].score-=h.points; S.used.pop(); S.country=h.country; S.song=h.song; if(S.played && S.played.length) S.played.pop(); S.screen='play'; },
+    nextround:function(){ if(S.round>=S.rounds){ S.screen='final'; return; } S.round++; newRound(); },
+    end:function(){ modal=null; S.screen='final'; },
+    rematch:function(){ A.start(); },
+    newgame:function(){ modal=null; var keep=S.players.map(function(p){return {name:p.name,score:0};}); var host=S.host, rounds=S.rounds, graded=S.graded; S=fresh(); S.players=keep; S.host=host; S.rounds=rounds; S.graded=graded; },
+    menu:function(){ modal=menuSheet(); },
+    splogin:function(){ spLogin(); return 'async'; },
+    spout:function(){ spDisconnect(); },
+    spplay:function(){ var c=curSong(); if(c && !spBusy) spPlay(c); return 'async'; },
+    sppause:function(){ spPause(); return 'async'; },
+    closemenu:function(){ modal=null; }
+  };
+
+  app.addEventListener('click', function(e){
+    var t = e.target.closest('[data-a]');
+    if(!t) return;
+    if(t.classList.contains('modal') && e.target.closest('[data-stop]')) return;
+    var a = t.getAttribute('data-a');
+    if(A[a]){ e.preventDefault(); if(A[a](t.dataset) !== 'async') render(); }
+  });
+
+  app.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(e.target.getAttribute('data-form') === 'cid'){
+      var v = (document.getElementById('cid').value || '').trim();
+      if(/^[0-9a-f]{32}$/i.test(v)){ SP.cid = v; saveSP(); spMsg = ''; } else { spMsg = 'That doesn\'t look like a Client ID (32 letters and numbers).'; }
+      render(true); return;
+    }
+    var inp = document.getElementById('newp');
+    var name = (inp.value||'').trim();
+    if(!name) return;
+    if(S.players.length>=8) return;
+    S.players.push({name:name, score:0});
+    render();
+    var n = document.getElementById('newp'); if(n) n.focus();
+  });
+
+  app.addEventListener('input', function(e){
+    if(e.target.id==='cs'){
+      S.search = e.target.value;
+      var pos = e.target.selectionStart;
+      render();
+      var el = document.getElementById('cs'); if(el){ el.focus(); try{ el.setSelectionRange(pos,pos); }catch(_){} }
+    }
+  });
+
+  // Hold-to-peek
+  function peek(on){
+    var t = document.getElementById('peekt');
+    var c = curSong();
+    if(t) t.textContent = on ? countryName(S.country) + (c ? ' · ' + c[0] : '') : 'Hold to peek';
+  }
+  app.addEventListener('pointerdown', function(e){ if(e.target.closest('#peek')){ e.preventDefault(); peek(true); } });
+  ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
+    app.addEventListener(ev, function(e){ if(e.target.closest && e.target.closest('#peek')) peek(false); }, true);
+  });
+  app.addEventListener('contextmenu', function(e){ if(e.target.closest('#peek')) e.preventDefault(); });
+
+  render();
+  if(CAN_SPOTIFY) spHandleRedirect().then(function(){ render(); });
+})();
+</script>
+</body>
+</html>
