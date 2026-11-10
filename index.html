@@ -161,7 +161,42 @@
   function hasLocal(code){ return !!(LOCAL[code] && LOCAL[code].length); }
   function cleanTitle(t){ return t.replace(/\s*\((w\/|feat|with)[^)]*\)/ig,'').replace(/\s+-\s+(from|remaster).*$/i,''); }
   function songUrl(s){ return 'https://open.spotify.com/search/' + encodeURIComponent(s[0] + ' ' + cleanTitle(s[1])); }
-  function curSong(){ return hasLocal(S.country) && S.queue ? LOCAL[S.country][S.queue[S.qpos % S.queue.length]] : null; }
+  function curSong(){ return hasLocal(S.country) && S.picked != null ? LOCAL[S.country][S.picked] : null; }
+  // The round's 5 candidate songs; the host picks one per attempt.
+  function wasPlayed(song){ return (S.played||[]).some(function(p){ return p[1]===song[1] && p[0]===song[0]; }); }
+  function songListHtml(){
+    var list = LOCAL[S.country], conn = spConnected();
+    var rows = S.choices.map(function(idx){
+      var song = list[idx], now = S.picked === idx, done = !now && wasPlayed(song);
+      var inner = '<span class="grow stack" style="gap:2px;min-width:0;text-align:left"><span style="font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(cleanTitle(song[1]))+'</span>'+
+        '<span class="muted" style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(song[0])+'</span></span>'+
+        '<span class="muted" style="font-size:12px;font-weight:600;flex:none">'+(now ? (spBusy ? 'Loading…' : 'Now playing') : done ? 'Played' : '')+'</span>'+
+        (done ? '' : '<span style="flex:none;color:var(--accent)">'+I.play+'</span>');
+      var style = 'min-height:56px;padding:8px 14px;border-radius:14px;display:flex;align-items:center;gap:10px;width:100%;'+
+        (now ? 'background:var(--accent-soft);border:2px solid var(--accent);' : 'background:var(--card2);border:2px solid transparent;')+(done ? 'opacity:.45;' : '');
+      if(done) return '<div style="'+style+'">'+inner+'</div>';
+      return conn
+        ? '<button style="'+style+'" data-a="pick" data-i="'+idx+'" '+(spBusy?'disabled':'')+'>'+inner+'</button>'
+        : '<a style="'+style+'color:var(--text);text-decoration:none" href="'+songUrl(song)+'" target="_blank" rel="noopener" data-a="pick" data-i="'+idx+'" data-link="1">'+inner+'</a>';
+    }).join('');
+    return '<p class="muted" style="font-size:14px;line-height:1.5">Pick a local hit to play'+(conn ? '' : ' (opens Spotify)')+'.</p>'+
+      '<div class="stack" style="gap:8px">'+rows+'</div>'+
+      (conn && spMsg ? '<p class="muted" style="font-size:13px;text-align:center" role="status">'+esc(spMsg)+'</p>' : '')+
+      (conn && spWake ? '<a class="btn spotify" href="'+spWake+'" target="_blank" rel="noopener">'+I.play+'Wake Spotify</a>' : '')+
+      '<div class="row" style="justify-content:space-between">'+
+        '<button class="btn link" style="min-height:40px;font-size:13px;color:var(--muted);padding:0" data-a="newchoices">Show 5 other songs</button>'+
+        (conn ? '<button class="btn link" style="min-height:40px;font-size:13px;padding:0" data-a="sppause">'+(spQuiet?'Volume back up':'Quiet')+'</button>' : '')+
+      '</div>';
+  }
+  function dealChoices(){
+    var list = LOCAL[S.country], out = [];
+    for(var n=0; n<S.queue.length && out.length<5; n++){
+      var idx = S.queue[(S.qpos + n) % S.queue.length];
+      if(!wasPlayed(list[idx])) out.push(idx);
+    }
+    S.qpos = (S.qpos + Math.max(out.length,1)) % S.queue.length;
+    S.choices = out;
+  }
   function shuffled(n){ var a=[]; for(var i=0;i<n;i++) a.push(i); for(i=n-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
   function alsoText(list){
     if(!list || !list.length) return 'Only charts here';
@@ -387,18 +422,7 @@
       '<div class="card stack" style="gap:14px;padding:20px;border-radius:20px"><div class="progress">'+bars+'</div>'+
       '<div class="row" style="justify-content:space-between;align-items:baseline"><span class="display" style="font-size:30px;font-weight:700">Song '+S.song+' of '+S.songs+'</span>'+
       '<span class="display" style="font-size:22px;font-weight:700;color:var(--accent)">'+pts+' pt'+(pts>1?'s':'')+'</span></div>'+
-      (curSong() && spConnected()
-        ? '<p class="muted" style="font-size:14px;line-height:1.5">A local hit, picked at random. It plays on the host\'s Spotify.</p>'+
-          '<div class="row" style="gap:8px"><button class="btn primary grow" style="min-height:56px;font-size:17px" data-a="spplay" '+(spBusy?'disabled':'')+'>'+I.play+'Play song '+S.song+'</button>'+
-          '<button class="btn" style="min-height:56px" aria-label="'+(spQuiet?'Volume back up':'Quiet: turn Spotify down')+'" data-a="sppause">'+(spQuiet?'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>':'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"/></svg>')+'</button></div>'+
-          (spMsg ? '<p class="muted" style="font-size:13px;text-align:center" role="status">'+esc(spMsg)+'</p>' : '')+
-          (spWake ? '<a class="btn spotify" href="'+spWake+'" target="_blank" rel="noopener">'+I.play+'Wake Spotify</a>' : '')+
-          '<div class="row" style="justify-content:space-between"><button class="btn link" style="min-height:36px;font-size:13px;color:var(--muted);padding:0" data-a="skipsong">Pick a different song</button>'+
-          '<a href="'+songUrl(curSong())+'" target="_blank" rel="noopener" style="font-size:13px;color:var(--muted)">Open in Spotify</a></div>'
-      : curSong()
-        ? '<p class="muted" style="font-size:14px;line-height:1.5">A local hit, picked at random. Tap to play it in Spotify, then come back here.</p>'+
-          '<a class="btn spotify" href="'+songUrl(curSong())+'" target="_blank" rel="noopener">'+I.play+'Play song '+S.song+' in Spotify</a>'+
-          '<button class="btn link" style="min-height:36px;font-size:13px;color:var(--muted)" data-a="skipsong">Can\'t find it? Pick a different song</button>'
+      (hasLocal(S.country) && S.choices ? songListHtml()
         : '<p class="muted" style="font-size:14px;line-height:1.5">Play a song from the country\'s Top 50. Skip anything that charts in other countries too.</p>'+
           '<a class="btn spotify" href="'+spotifyUrl(S.country)+'" target="_blank" rel="noopener">'+I.play+'Open the Top 50 in Spotify</a>'+
           '<a href="'+searchUrl(S.country)+'" target="_blank" rel="noopener" style="font-size:13px;text-align:center;color:var(--muted)">Wrong playlist? Search Spotify instead</a>')+
@@ -483,10 +507,11 @@
     start:function(){ if(guessers().length<1) return; S.players.forEach(function(p){p.score=0;}); S.round=1; S.used=[]; S.history=[]; newRound(); },
     choose:function(d){ S.country=d.c; },
     random:function(){ var left=COUNTRIES.filter(function(c){return S.used.indexOf(c[0])<0;}); if(left.length){ S.country=left[Math.floor(Math.random()*left.length)][0]; S.search=''; } },
-    lock:function(){ if(!S.country) return; spMsg=''; spWake=''; S.song=1; S.played=[]; S.qpos=0; S.queue = hasLocal(S.country) ? shuffled(LOCAL[S.country].length) : null; S.screen='play'; },
+    lock:function(){ if(!S.country) return; spMsg=''; spWake=''; S.song=1; S.played=[]; S.qpos=0; S.picked=null; S.queue = hasLocal(S.country) ? shuffled(LOCAL[S.country].length) : null; S.choices=null; if(S.queue) dealChoices(); S.screen='play'; },
     award:function(d){ var i=+d.i, pts=ptsFor(S.song); S.players[i].score+=pts; markPlayed(); S.history.push({round:S.round,country:S.country,winner:i,points:pts,song:S.song,songs:S.played.slice()}); S.used.push(S.country); S.screen='reveal'; },
-    nextsong:function(){ if(S.song<S.songs){ markPlayed(); S.qpos++; S.song++; spMsg=''; spWake=''; } },
-    skipsong:function(){ if(S.queue) S.qpos++; spMsg=''; spWake=''; },
+    nextsong:function(){ if(S.song<S.songs){ markPlayed(); S.picked=null; S.song++; spMsg=''; spWake=''; } },
+    newchoices:function(){ if(S.queue){ markPlayed(); S.picked=null; dealChoices(); } spMsg=''; spWake=''; },
+    pick:function(d){ var i=+d.i; if(S.picked!=null && S.picked!==i) markPlayed(); S.picked=i; spWake=''; if(spConnected()){ if(!spBusy) spPlay(LOCAL[S.country][i]); return 'async'; } },
     nobody:function(){ markPlayed(); S.history.push({round:S.round,country:S.country,winner:null,points:0,song:S.song,songs:S.played.slice()}); S.used.push(S.country); S.screen='reveal'; },
     undo:function(){ var h=S.history.pop(); if(!h) return; if(h.winner!=null) S.players[h.winner].score-=h.points; S.used.pop(); S.country=h.country; S.song=h.song; if(S.played && S.played.length) S.played.pop(); S.screen='play'; },
     nextround:function(){ if(S.round>=S.rounds){ S.screen='final'; return; } S.round++; newRound(); },
@@ -496,7 +521,6 @@
     menu:function(){ modal=menuSheet(); },
     splogin:function(){ spLogin(); return 'async'; },
     spout:function(){ spDisconnect(); },
-    spplay:function(){ var c=curSong(); if(c && !spBusy) spPlay(c); return 'async'; },
     sppause:function(){ spQuietToggle(); return 'async'; },
     closemenu:function(){ modal=null; }
   };
@@ -506,7 +530,7 @@
     if(!t) return;
     if(t.classList.contains('modal') && e.target.closest('[data-stop]')) return;
     var a = t.getAttribute('data-a');
-    if(A[a]){ e.preventDefault(); if(A[a](t.dataset) !== 'async') render(); }
+    if(A[a]){ if(!t.dataset.link) e.preventDefault(); var r = A[a](t.dataset); if(r !== 'async'){ if(t.dataset.link) setTimeout(function(){ render(true); }, 0); else render(); } }
   });
 
   app.addEventListener('submit', function(e){
